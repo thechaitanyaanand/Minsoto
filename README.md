@@ -1,5 +1,3 @@
-# Minsoto
-# Minsoto
 # Minsoto - A Social Productivity Platform
 
 **Tired of social media that's built for distraction? Minsoto is a new social network designed for focus and growth.** Instead of a single noisy feed, you join specific "Circles" for your hobbies, skills, and goals. It's the first social platform where your community actively helps you achieve your goals, turning passive scrolling into productive action.
