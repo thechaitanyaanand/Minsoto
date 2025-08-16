@@ -1,0 +1,42 @@
+# --- Python / Virtual Environment ---
+# Ignore the virtual environment directory
+venv/
+env/
+.venv/
+.env/
+
+# Ignore compiled Python files and cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Django Specific ---
+# Ignore local database files (good practice even if using remote DB)
+db.sqlite3
+db.sqlite3-journal
+
+# Ignore user-uploaded media files (these should be on Cloudinary)
+media/
+
+# Ignore log files
+*.log
+
+# Ignore static files collected for deployment
+staticfiles/
+
+# --- Environment Variables ---
+# CRITICAL: Ignore environment variable files containing secrets
+.env
+.env.*
+
+# --- IDE / Editor Specific ---
+# VSCode
+.vscode/
+
+# PyCharm
+.idea/
+
+# --- Other ---
+# Ignore coverage reports
+.coverage
