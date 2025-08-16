@@ -37,79 +37,16 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    # 3rd Party Apps
-    'rest_framework',
-    'rest_framework_simplejwt',
-    'corsheaders',
-    'rest_framework.authtoken', # Required by dj-rest-auth
-    'dj_rest_auth',
-    'dj_rest_auth.registration',
-    'allauth',
-    'allauth.account',
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google', # For Google OAuth2
-    # Local Apps
-    'users'
 ]
-
-# Tell Django to use our CustomUser model instead of the default one
-AUTH_USER_MODEL = 'users.CustomUser'
-
-# Add this line to tell Django which site it's running on.
-# allauth requires this.
-SITE_ID = 1
-
-# Add this to the bottom of your settings.py file
-# This tells dj-rest-auth to use JWT tokens
-REST_AUTH = {
-    'USE_JWT': True,
-    'JWT_AUTH_HTTPONLY': False, # Allows frontend to access the token
-}
-
-# allauth configuration
-# This tells allauth to use our CustomUser model
-ACCOUNT_USER_MODEL_USERNAME_FIELD = None
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
-ACCOUNT_EMAIL_VERIFICATION = 'optional' # Change to 'mandatory' for production
-
-# Google Provider specific settings
-SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
-        ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        }
-    }
-}
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    # Add CorsMiddleware right here
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-]
-
-# Configure Django REST Framework to use JWT for authentication
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    )
-}
-
-# Configure CORS to allow our Next.js frontend to make requests
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
 ]
 
 ROOT_URLCONF = 'minsoto_project.urls'
