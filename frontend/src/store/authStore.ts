@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import axios, { AxiosError } from 'axios'; // Import AxiosError for type checking
+import axios from 'axios';
 import { persist } from 'zustand/middleware';
 
 const API_URL = 'http://127.0.0.1:8000'; // Your Django backend URL
@@ -10,11 +10,6 @@ interface User {
   email: string;
   // Add other user fields from your UserSerializer as needed
 }
-
-// A type for the expected structure of Django REST Framework validation errors
-type DjangoValidationErrors = {
-  [field: string]: string[];
-};
 
 interface AuthState {
   accessToken: string | null;
@@ -37,36 +32,37 @@ const useAuthStore = create<AuthState>()(
 
       login: async (email, password) => {
         try {
+          // *** THE FIX IS HERE: Changed URL from /token/ to /login/ ***
           const response = await axios.post(`${API_URL}/api/auth/login/`, {
             email, 
             password,
           });
+          // dj-rest-auth returns tokens and user data in a different structure
           const { access_token, refresh_token, user } = response.data;
           set({ accessToken: access_token, refreshToken: refresh_token, user, isAuthenticated: true });
           axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
           return { success: true };
-        } catch (error) { // Type 'error' as unknown
-            if (error instanceof AxiosError && error.response) {
-                const errorData = error.response.data as DjangoValidationErrors;
-                // Get the first error message from the response
-                const errorMessage = Object.values(errorData).flat()[0] || 'Login failed. Please check your credentials.';
-                return { success: false, error: errorMessage };
-            }
-            return { success: false, error: 'An unexpected error occurred.' };
+        } catch (error: any) {
+          const errorData = error.response?.data;
+          // Flatten potential nested error messages
+          const errorMessage = Object.values(errorData).flat().join(' ');
+          return { success: false, error: errorMessage || 'Login failed. Please check your credentials.' };
         }
       },
       
+      // (The rest of the file is the same as before)
+
       loginWithGoogle: async (idToken) => {
         try {
           const response = await axios.post(`${API_URL}/api/auth/google/`, {
-            id_token: idToken,
+            access_token: idToken,
           });
           const { access_token, refresh_token, user } = response.data;
           set({ accessToken: access_token, refreshToken: refresh_token, user, isAuthenticated: true });
           axios.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
           return { success: true };
-        } catch (_error) { // Use `_error` to silence the 'unused variable' warning
-          return { success: false, error: 'Google login failed on our server. Please ensure the Google People API is enabled in your cloud console.' };
+        } catch (error: any) {
+          return { success: false, error: 'Google login failed on our server.' };
         }
       },
 
@@ -79,13 +75,10 @@ const useAuthStore = create<AuthState>()(
             password2,
           });
           return { success: true };
-        } catch (error) { // Type 'error' as unknown
-            if (error instanceof AxiosError && error.response) {
-                const errorData = error.response.data as DjangoValidationErrors;
-                const errorMessage = Object.values(errorData).flat().join(' ');
-                return { success: false, error: errorMessage || 'Registration failed.' };
-            }
-            return { success: false, error: 'An unexpected error occurred.' };
+        } catch (error: any) {
+          const errorData = error.response?.data;
+          const errorMessage = Object.entries(errorData).map(([key, value]) => `${key}: ${(value as string[]).join(', ')}`).join(' ');
+          return { success: false, error: errorMessage || 'Registration failed.' };
         }
       },
 
