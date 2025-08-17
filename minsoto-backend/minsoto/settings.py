@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 from dotenv import load_dotenv
+from datetime import timedelta
 
 load_dotenv() # Load environment variables from .env file
 
@@ -42,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework_simplejwt',
         # ... other apps
     'django.contrib.sites', # Required by allauth
     'rest_framework',
@@ -110,11 +112,41 @@ DATABASES = {
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
-# --- REST Framework, JWT, and dj-rest-auth Configuration ---
+'''# --- REST Framework, JWT, and dj-rest-auth Configuration ---
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+}'''
+
+# Add these configurations
+'''REST_USE_JWT = True'''
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.TokenAuthentication',
+    ),
+}
+
+JWT_AUTH_COOKIE = 'jwt-auth'
+JWT_AUTH_REFRESH_COOKIE = 'jwt-refresh'
+
+# Add Simple JWT configuration
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': True,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'LEEWAY': timedelta(seconds=10),  # This fixes the timing issue
+}
+
+# Fix the REST_AUTH configuration
+REST_AUTH = {
+    'USE_JWT': True,
+    'JWT_AUTH_COOKIE': 'jwt-auth',
+    'JWT_AUTH_REFRESH_COOKIE': 'jwt-refresh',
+    'USER_DETAILS_SERIALIZER': 'users.serializers.CustomUserDetailsSerializer',
 }
 
 REST_USE_JWT = True # Tell dj-rest-auth to use JWT
@@ -124,6 +156,8 @@ REST_USE_JWT = True # Tell dj-rest-auth to use JWT
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
 ]
+
+SITE_ID = 1
 
 # --- Allauth Configuration ---
 AUTHENTICATION_BACKENDS = [
@@ -137,7 +171,6 @@ ACCOUNT_EMAIL_VERIFICATION = 'none'
 ACCOUNT_USERNAME_REQUIRED = False
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
-SOCIALACCOUNT_ADAPTER = 'users.adapters.CustomSocialAccountAdapter'
 
 
 # --- Google Provider Configuration for Allauth ---
@@ -146,6 +179,7 @@ SOCIALACCOUNT_PROVIDERS = {
         'APP': {
             'client_id': os.getenv('GOOGLE_CLIENT_ID'),
             'secret': os.getenv('GOOGLE_CLIENT_SECRET'),
+            'key': ''
         },
         'SCOPE': [
             'profile',
@@ -156,7 +190,6 @@ SOCIALACCOUNT_PROVIDERS = {
         }
     }
 }
-
 # --- Email Configuration (for development) ---
 # For production, use a service like SendGrid or Mailgun
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

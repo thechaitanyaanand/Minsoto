@@ -1,6 +1,7 @@
 # users/serializers.py
 from dj_rest_auth.serializers import UserDetailsSerializer
 from rest_framework import serializers
+from .models import CustomUser, Profile
 
 class CustomUserDetailsSerializer(UserDetailsSerializer):
     username_is_default = serializers.SerializerMethodField()
@@ -21,3 +22,15 @@ class CustomUserDetailsSerializer(UserDetailsSerializer):
 REST_AUTH_SERIALIZERS = {
     'USER_DETAILS_SERIALIZER': 'users.serializers.CustomUserDetailsSerializer',
 }
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['bio', 'profile_picture_url', 'theme_color', 'widget_layout']
+
+class PublicUserSerializer(serializers.ModelSerializer):
+    # Nest the profile serializer to include profile data with the user
+    profile = ProfileSerializer(read_only=True)
+
+    class Meta:
+        model = CustomUser
+        fields = ['id', 'username', 'first_name', 'last_name', 'profile']

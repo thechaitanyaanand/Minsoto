@@ -17,7 +17,7 @@ const LoginPage = () => {
       {/* Left Column - Branding & Image */}
       <div
         className="hidden lg:flex w-1/2 bg-cover bg-center p-12 flex-col justify-center"
-        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542542682-300c39027993?q=80&w=2574&auto=format&fit=crop')" }}
+        style={{ backgroundImage: "url('https://images.unsplash.com/photo-1576823262099-1b7d8e442203?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D')" }}
       >
         <div className="bg-black bg-opacity-50 p-8 rounded-lg">
           <h1 className="text-5xl font-bold mb-4">Minsoto</h1>
