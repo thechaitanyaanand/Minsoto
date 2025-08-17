@@ -1,5 +1,5 @@
 // minsoto-frontend/pages/auth/google/callback.js
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
 import apiClient from '../../../lib/api';
 import { useAuth } from '../../../context/AuthContext';
@@ -7,35 +7,38 @@ import { useAuth } from '../../../context/AuthContext';
 const GoogleCallback = () => {
   const router = useRouter();
   const { login } = useAuth();
+  const hasProcessed = useRef(false); // Prevent double execution
 
   useEffect(() => {
     const { code } = router.query;
     
-    if (code) {
-      // URL decode the authorization code
-      const decodedCode = decodeURIComponent(code);
+    if (code && !hasProcessed.current) {
+      hasProcessed.current = true; // Mark as processed
       
-      console.log('Original code:', code);
-      console.log('Decoded code:', decodedCode);
+      console.log('Processing Google login with code:', code);
       
       apiClient
         .post('/auth/google/', { 
-          code: decodedCode  // Use decoded code
+          code: code // Don't decode - let Django handle it
         })
         .then((response) => {
-          console.log('Google login response:', response.data);
+          console.log('Google login success:', response.data);
           
-          // Extract user data and tokens properly
-          const { user, access_token, refresh_token } = response.data;
+          // Extract tokens properly based on dj-rest-auth response format
+          const { user, access_token, refresh_token, access, refresh } = response.data;
           
-          // Pass them separately to the login function  
-          login({ user }, { access_token, refresh_token });
+          // Handle different response formats
+          const tokens = {
+            access_token: access_token || access,
+            refresh_token: refresh_token || refresh
+          };
+          
+          login({ user }, tokens);
         })
         .catch((error) => {
           console.error('Login failed:', error);
           if (error.response) {
-            console.error('Error response:', error.response.data);
-            console.error('Error status:', error.response.status);
+            console.error('Error details:', error.response.data);
           }
           router.push('/login-error');
         });

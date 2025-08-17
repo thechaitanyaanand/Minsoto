@@ -15,16 +15,36 @@ from .models import CustomUser
 from .serializers import PublicUserSerializer, ProfileSerializer
 from rest_framework import generics
 from .models import Profile
+import logging
+
+logger = logging.getLogger(__name__)
 
 class GoogleLogin(SocialLoginView):
     adapter_class = GoogleOAuth2Adapter
-    callback_url = "http://localhost:3000/auth/google/callback"  # Must match frontend exactly
+    callback_url = "http://localhost:3000/auth/google/callback"
     client_class = OAuth2Client
     
     def post(self, request, *args, **kwargs):
-        # Add some debugging
-        print("Received data:", request.data)
-        return super().post(request, *args, **kwargs)
+        logger.info(f"Google login attempt with data: {request.data}")
+        
+        try:
+            response = super().post(request, *args, **kwargs)
+            logger.info(f"Google login successful: {response.status_code}")
+            return response
+        except Exception as e:
+            logger.error(f"Google login failed: {str(e)}")
+            
+            # Handle specific known errors
+            if "Invalid authorization code" in str(e):
+                return Response(
+                    {"error": "Authorization code already used or invalid"}, 
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            return Response(
+                {"error": "Authentication failed"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
     
 class SetUsernameView(APIView):
     permission_classes = [IsAuthenticated]
