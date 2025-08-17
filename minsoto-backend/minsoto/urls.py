@@ -10,7 +10,10 @@ urlpatterns = [
     path('api/auth/google/', GoogleLogin.as_view(), name='google_login'),
     path('api/auth/', include('dj_rest_auth.urls')),
     path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
-    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),  # Add this
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/profiles/me/', MyProfileUpdateView.as_view(), name='my-profile-update'),
     path('api/profiles/<str:username>/', ProfileDetailView.as_view(), name='profile-detail'),
+    path('api/connections/', include('connections.urls')),
+    path('api/content/', include('content.urls')),
+    path('api/circles/', include('circles.urls')),
 ]

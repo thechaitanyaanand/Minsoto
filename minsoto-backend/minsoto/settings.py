@@ -49,8 +49,12 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'corsheaders',
+    # apps
     'users',
-
+    'connections',
+    'content', 
+    'circles',
+    'extensions',
     # allauth and dj-rest-auth
     'allauth',
     'allauth.account',
@@ -123,7 +127,7 @@ REST_FRAMEWORK = {
 '''REST_USE_JWT = True'''
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework.authentication.TokenAuthentication',
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # ← Fixed
     ),
 }
 
@@ -132,13 +136,12 @@ JWT_AUTH_REFRESH_COOKIE = 'jwt-refresh'
 
 # Add Simple JWT configuration
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),  # Increase from 60 mins
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
     'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
-    'LEEWAY': timedelta(seconds=10),  # This fixes the timing issue
 }
 
 # Fix the REST_AUTH configuration
@@ -165,12 +168,11 @@ AUTHENTICATION_BACKENDS = [
     'django.contrib.auth.backends.ModelBackend',
 ]
 
-# Allauth: Do not require email verification for now
-ACCOUNT_EMAIL_VERIFICATION = 'none'
-# Allauth: Use email as the username
-ACCOUNT_USERNAME_REQUIRED = False
-ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
+
+SOCIALACCOUNT_AUTO_SIGNUP = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION = True
+SOCIALACCOUNT_EMAIL_AUTHENTICATION_AUTO_CONNECT = True
 
 
 # --- Google Provider Configuration for Allauth ---
@@ -187,9 +189,22 @@ SOCIALACCOUNT_PROVIDERS = {
         ],
         'AUTH_PARAMS': {
             'access_type': 'online',
-        }
+        },
+        # Add this to enable email matching
+        'VERIFIED_EMAIL': True,
     }
 }
+
+# Allow connecting multiple social accounts to the same email
+ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_UNIQUE_EMAIL = True
+ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+
+# This is the key setting - allows linking social accounts to existing users
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
 # --- Email Configuration (for development) ---
 # For production, use a service like SendGrid or Mailgun
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'

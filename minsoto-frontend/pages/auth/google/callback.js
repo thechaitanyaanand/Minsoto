@@ -7,31 +7,44 @@ import { useAuth } from '../../../context/AuthContext';
 const GoogleCallback = () => {
   const router = useRouter();
   const { login } = useAuth();
-  const hasProcessed = useRef(false); // Prevent double execution
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
     const { code } = router.query;
-    
     if (code && !hasProcessed.current) {
-      hasProcessed.current = true; // Mark as processed
-      
+      hasProcessed.current = true;
       console.log('Processing Google login with code:', code);
       
-      apiClient
-        .post('/auth/google/', { 
-          code: code // Don't decode - let Django handle it
-        })
+      apiClient.post('/auth/google/', { code: code })
         .then((response) => {
           console.log('Google login success:', response.data);
           
-          // Extract tokens properly based on dj-rest-auth response format
-          const { user, access_token, refresh_token, access, refresh } = response.data;
+          // Debug: Log the exact response structure
+          console.log('Response keys:', Object.keys(response.data));
           
-          // Handle different response formats
+          // Extract tokens with multiple possible formats
+          const { 
+            user, 
+            access_token, 
+            refresh_token, 
+            access, 
+            refresh,
+            key,  // dj-rest-auth sometimes uses 'key'
+            token  // fallback
+          } = response.data;
+          
           const tokens = {
-            access_token: access_token || access,
+            access_token: access_token || access || key || token,
             refresh_token: refresh_token || refresh
           };
+          
+          console.log('Extracted tokens:', tokens);
+          
+          if (!tokens.access_token) {
+            console.error('No access token found in response!');
+            router.push('/login-error');
+            return;
+          }
           
           login({ user }, tokens);
         })
@@ -45,18 +58,7 @@ const GoogleCallback = () => {
     }
   }, [router.query, login, router]);
 
-  return (
-    <div style={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      height: '100vh',
-      flexDirection: 'column'
-    }}>
-      <div>Processing your login...</div>
-      <div style={{ marginTop: '20px' }}>Please wait...</div>
-    </div>
-  );
+  return <div>Processing login...</div>;
 };
 
 export default GoogleCallback;

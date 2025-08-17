@@ -11,119 +11,153 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const router = useRouter();
 
-  // On component mount, check if user is already logged in
   useEffect(() => {
     const checkUserLoggedIn = async () => {
+      console.log('=== Auth Check Started ===');
       const accessToken = localStorage.getItem('accessToken');
       const refreshToken = localStorage.getItem('refreshToken');
-
-      if (accessToken || refreshToken) {
+      
+      console.log('Access token exists:', !!accessToken);
+      console.log('Refresh token exists:', !!refreshToken);
+      
+      if (accessToken) {
+        console.log('Access token preview:', accessToken.substring(0, 50) + '...');
+        
         try {
-          // Try to fetch user details with current token
+          console.log('Fetching user data...');
           const response = await apiClient.get('/auth/user/');
+          console.log('User fetch successful:', response.data);
+          
           setUser(response.data);
           setIsAuthenticated(true);
+          
+          // Handle redirects
+          if (router.pathname === '/login' || router.pathname === '/register') {
+            if (response.data.username_is_default) {
+              console.log('Redirecting to complete-profile');
+              router.replace('/complete-profile');
+            } else {
+              console.log('Redirecting to dashboard');
+              router.replace('/dashboard');
+            }
+          }
         } catch (error) {
-          console.error('Token validation failed:', error);
-          // If token validation fails, try to refresh
-          if (refreshToken) {
+          console.error('User fetch failed:', error.response?.status, error.response?.data);
+          
+          if (refreshToken && error.response?.status === 401) {
+            console.log('Attempting token refresh...');
             try {
-              const refreshResponse = await apiClient.post('/auth/token/refresh/', {
-                refresh: refreshToken,
+              const refreshResponse = await apiClient.post('/auth/token/refresh/', { 
+                refresh: refreshToken 
               });
-              
               const newAccessToken = refreshResponse.data.access;
               localStorage.setItem('accessToken', newAccessToken);
+              console.log('Token refresh successful');
               
-              // Try fetching user details again with new token
               const userResponse = await apiClient.get('/auth/user/');
               setUser(userResponse.data);
               setIsAuthenticated(true);
+              
+              if (router.pathname === '/login' || router.pathname === '/register') {
+                if (userResponse.data.username_is_default) {
+                  router.replace('/complete-profile');
+                } else {
+                  router.replace('/dashboard');
+                }
+              }
             } catch (refreshError) {
               console.error('Token refresh failed:', refreshError);
-              // If refresh also fails, logout the user
-              logout();
+              localStorage.removeItem('accessToken');
+              localStorage.removeItem('refreshToken');
+              setUser(null);
+              setIsAuthenticated(false);
+              if (router.pathname !== '/login' && router.pathname !== '/register') {
+                router.replace('/login');
+              }
             }
           } else {
-            // No refresh token, so logout
-            logout();
+            console.log('No refresh token or non-401 error, clearing auth');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('refreshToken');
+            setUser(null);
+            setIsAuthenticated(false);
+            if (router.pathname !== '/login' && router.pathname !== '/register') {
+              router.replace('/login');
+            }
           }
+        }
+      } else {
+        console.log('No access token found');
+        setUser(null);
+        setIsAuthenticated(false);
+        if (router.pathname !== '/login' && router.pathname !== '/register') {
+          router.replace('/login');
         }
       }
       
       setLoading(false);
+      console.log('=== Auth Check Complete ===');
     };
 
     checkUserLoggedIn();
-  }, []);
+  }, [router.pathname]);
 
   const login = (userData, tokens) => {
+    console.log('=== Login Function Called ===');
+    console.log('User data:', userData);
+    console.log('Tokens received:', tokens);
+    
     try {
-      console.log('Login called with:', { userData, tokens });
-      
-      // Store tokens in localStorage
       if (tokens.access_token) {
         localStorage.setItem('accessToken', tokens.access_token);
+        console.log('Access token stored');
+      } else {
+        console.error('No access_token in tokens object!');
+        throw new Error('No access token received');
       }
+      
       if (tokens.refresh_token) {
         localStorage.setItem('refreshToken', tokens.refresh_token);
+        console.log('Refresh token stored');
       }
 
-      // Set user data
       setUser(userData.user);
       setIsAuthenticated(true);
 
-      // Redirect based on whether they need to set a username
       if (userData.user.username_is_default) {
+        console.log('Username is default, redirecting to complete-profile');
         router.push('/complete-profile');
       } else {
+        console.log('Username set, redirecting to dashboard');
         router.push('/dashboard');
       }
     } catch (error) {
-      console.error('Error in login function:', error);
+      console.error('Login function error:', error);
       router.push('/login-error');
     }
   };
 
   const logout = () => {
-    // Try to logout on server (don't wait for response)
-    apiClient.post('/auth/logout/').catch(() => {
-      console.log('Server logout failed, but continuing with client logout');
-    });
-
-    // Clear local storage
+    console.log('Logging out...');
+    apiClient.post('/auth/logout/').catch(() => {});
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
-    
-    // Reset state
     setUser(null);
     setIsAuthenticated(false);
-    
-    // Redirect to login page
-    router.push('/login');
+    router.replace('/login');
   };
 
   const updateUser = (updatedUserData) => {
-    setUser(prev => ({ ...prev, ...updatedUserData }));
-  };
-
-  const value = {
-    user,
-    loading,
-    isAuthenticated,
-    login,
-    logout,
-    updateUser,
+    setUser((prev) => ({ ...prev, ...updatedUserData }));
   };
 
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, login, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-// Custom hook to use the AuthContext
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {

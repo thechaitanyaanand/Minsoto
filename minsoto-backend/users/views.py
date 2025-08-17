@@ -15,6 +15,7 @@ from .models import CustomUser
 from .serializers import PublicUserSerializer, ProfileSerializer
 from rest_framework import generics
 from .models import Profile
+from django.db import IntegrityError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -31,16 +32,24 @@ class GoogleLogin(SocialLoginView):
             response = super().post(request, *args, **kwargs)
             logger.info(f"Google login successful: {response.status_code}")
             return response
-        except Exception as e:
-            logger.error(f"Google login failed: {str(e)}")
+        except IntegrityError as e:
+            logger.error(f"Integrity error during Google login: {str(e)}")
             
-            # Handle specific known errors
-            if "Invalid authorization code" in str(e):
+            if "email" in str(e) and "already exists" in str(e):
                 return Response(
-                    {"error": "Authorization code already used or invalid"}, 
+                    {
+                        "error": "An account with this email already exists. Please log in with your existing credentials or contact support.",
+                        "detail": "email_already_exists"
+                    }, 
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            return Response(
+                {"error": "Account creation failed due to duplicate data"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"Google login failed: {str(e)}")
             return Response(
                 {"error": "Authentication failed"}, 
                 status=status.HTTP_400_BAD_REQUEST
