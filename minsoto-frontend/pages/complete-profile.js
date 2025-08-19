@@ -45,8 +45,8 @@ const CompleteProfile = () => {
       setError(
         err.response?.data?.error ||
         err.response?.data?.username?.[0] ||
-        err.response?.data?.bio?. ||
-        err.response?.data?.non_field_errors?. ||
+        err.response?.data?.bio?.[0] ||
+        err.response?.data?.non_field_errors?.[0] ||
         'An error occurred. Please try again.'
       );
     }

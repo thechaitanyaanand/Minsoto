@@ -12,8 +12,8 @@ urlpatterns = [
     path('api/auth/registration/', include('dj_rest_auth.registration.urls')),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/profiles/me/', MyProfileUpdateView.as_view(), name='my-profile-update'),
-    path('api/profiles/<str:username>/', ProfileDetailView.as_view(), name='profile-detail'),
+    path('api/profiles/<str:username>/', ProfileDetailView.as_view(), name='profile-detail'),  # ← FIXED
     path('api/connections/', include('connections.urls')),
-    path('api/content/', include('content.urls')),
-    path('api/circles/', include('circles.urls')),
+    path('api/content/', include('content.urls')),      # ← MISSING - Add this
+    path('api/circles/', include('circles.urls')),      # ← MISSING - Add this
 ]
