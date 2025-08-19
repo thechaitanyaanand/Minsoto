@@ -7,16 +7,14 @@ from .models import CustomUser
 from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 from allauth.socialaccount.providers.oauth2.client import OAuth2Client
 from dj_rest_auth.registration.views import SocialLoginView
-from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import CustomUser
 from .serializers import PublicUserSerializer, ProfileSerializer
 from rest_framework import generics
 from .models import Profile
 from django.db import IntegrityError
 import logging
+from rest_framework.decorators import api_view, permission_classes
+from django.db.models import Q
+
 
 logger = logging.getLogger(__name__)
 
@@ -93,3 +91,21 @@ class MyProfileUpdateView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         # This ensures users can only update their own profile
         return self.request.user.profile
+    
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def search_users(request):
+    query = request.GET.get('q', '')
+    if not query or len(query) < 2:
+        return Response([])
+    
+    users = CustomUser.objects.filter(
+        Q(username__icontains=query) | 
+        Q(first_name__icontains=query) | 
+        Q(last_name__icontains=query) |
+        Q(email__icontains=query)
+    ).exclude(id=request.user.id)[:10]  # Limit to 10 results
+    
+    serializer = PublicUserSerializer(users, many=True, context={'request': request})
+    return Response(serializer.data)

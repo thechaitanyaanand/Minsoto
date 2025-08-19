@@ -14,6 +14,8 @@ urlpatterns = [
     path('api/profiles/me/', MyProfileUpdateView.as_view(), name='my-profile-update'),
     path('api/profiles/<str:username>/', ProfileDetailView.as_view(), name='profile-detail'),  # ← FIXED
     path('api/connections/', include('connections.urls')),
-    path('api/content/', include('content.urls')),      # ← MISSING - Add this
-    path('api/circles/', include('circles.urls')),      # ← MISSING - Add this
+    path('api/content/', include('content.urls')),      # ← ADD
+    path('api/circles/', include('circles.urls')),      # ← ADD
 ]
+
+
